@@ -1,0 +1,39 @@
+
+services:
+
+  #DB_container
+  db_service:                               #service name
+    container_name: database_container         
+    image: mysql:latest
+    restart: always
+    ports: 
+      - 3306:3306
+    volumes:
+      - ./db_data:/data/db
+    environment:
+      - MYSQL_ROOT_USER=${DB_USERNAME}    #DB_USERNAME -> from .env
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+
+  #app_container
+  app:
+    container_name: app_continer
+    restart: always
+    build: .
+    ports:
+      - 3000:3000
+    depends_on:
+      - db_service                        #first start db service then application service
+
+  migration:
+    container_name: migrator
+    build: .
+    depends_on:
+      - db_service
+    command: sh -c 'until nc -z db_service 3306; do sleep 1; done; npx sequelize-cli db:migrate'
+
+
+
+
+
+
